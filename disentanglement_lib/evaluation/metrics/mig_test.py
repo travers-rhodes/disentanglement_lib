@@ -63,5 +63,25 @@ class MIGTest(absltest.TestCase):
         ground_truth_data, representation_function, random_state, None, 3000)
     self.assertBetween(scores["discrete_mig"], 0.0, 0.1)
 
+  # the representation here folds the dataset in on itself.
+  # it looks like MIG counts this as a relatively good representation 
+  def test_locally_good_metric(self):
+    gin.bind_parameter("discretizer.discretizer_fn", _identity_discretizer)
+    gin.bind_parameter("discretizer.num_bins", 10)
+    # 3 factors each with 40 possible values (0-39)
+    num_factors = 3
+    num_possible_values = 40
+    ground_truth_data = dummy_data.IdentityObservationsCustomSize(
+        [num_possible_values] * num_factors)
+    # fold the dataset on itself, so it's locally a good representation, but
+    # globally not
+    def representation_function(x):
+      x = np.abs(x - num_possible_values/2, dtype=np.float64)
+      return x 
+    random_state = np.random.RandomState(0)
+    scores = mig.compute_mig(
+        ground_truth_data, representation_function, random_state, None, 3000)
+    self.assertBetween(scores["discrete_mig"], 0.7, 1.0)
+
 if __name__ == "__main__":
   absltest.main()

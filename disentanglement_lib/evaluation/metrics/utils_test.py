@@ -19,6 +19,7 @@ from __future__ import division
 from __future__ import print_function
 from absl.testing import absltest
 from disentanglement_lib.evaluation.metrics import utils
+from disentanglement_lib.data.ground_truth import dummy_data
 import numpy as np
 
 
@@ -52,6 +53,111 @@ class UtilsTest(absltest.TestCase):
     shouldbe_test = np.zeros([10, 10])
     np.testing.assert_allclose(xs_train, shouldbe_train)
     np.testing.assert_allclose(xs_test, shouldbe_test)
+
+  def test_local_sample_factors(self):
+    random_state = np.random.RandomState(3)
+    # sample range of 10% of num_factors
+    factor_num_values = [1, 9, 10, 11, 100, 101]
+    samps = utils.local_sample_factors(1000, 0.1, 
+        factor_num_values, 0, random_state)
+    np.testing.assert_equal(samps.shape, (1000, 6))
+    self.assertTrue(np.all(samps[:,0] == 0))
+    # should all have the same value, since 0.1 * 9 < 1
+    self.assertTrue(np.max(samps[:,1]) - np.min(samps[:,1]) == 0)
+    # should have diameter of 2 for both these
+    for inx in [2,3]:
+      assert_correct_radius(self, samps[:,inx], 1, 0, factor_num_values[inx]-1)
+    # should have diameter of 20 for both these
+    for inx in [4,5]:
+      assert_correct_radius(self, samps[:,inx], 10, 0, factor_num_values[inx]-1)
+    # same experiment, but now we don't consider any factor 
+    # with numfactors less than 11 to count as continuous (so 10 should now also
+    # return all same values)
+    # sample range of 10% of num_factors
+    factor_num_values = [1, 9, 10, 11, 100, 110]
+    samps = utils.local_sample_factors(1000, 0.15, 
+        factor_num_values, 11, random_state)
+    np.testing.assert_equal(samps.shape, (1000, 6))
+    self.assertTrue(np.all(samps[:,0] == 0))
+    # should all have the same value
+    for inx in [1,2]:
+      self.assertTrue(np.max(samps[:,inx]) - np.min(samps[:,inx]) == 0)
+    # should have radius 1 for this, since floor(0.15 * 11) = 1
+    for inx in [3]:
+      assert_correct_radius(self, samps[:,inx], 1, 0, factor_num_values[inx]-1)
+    # should have diameter of 20 for both these
+    for inx in [4]:
+      assert_correct_radius(self, samps[:,inx], 15, 0, factor_num_values[inx]-1)
+    for inx in [5]:
+      assert_correct_radius(self, samps[:,inx], 16, 0, factor_num_values[inx]-1)
+
+  def test_sample_integers_around_center(self):
+    random_state = np.random.RandomState(3)
+    for i in range(20):
+      sample = utils.sample_integers_around_center(5, 3, 0, 10, 100, random_state)
+      self.assertTrue(np.all(sample <= 8))
+      self.assertTrue(np.all(sample >= 2))
+      self.assertTrue(np.any(sample > 6))
+      self.assertTrue(np.any(sample < 4))
+    for i in range(20):
+      sample = utils.sample_integers_around_center(5, 3, 4, 6, 100, random_state)
+      self.assertTrue(np.all(sample <= 6))
+      self.assertTrue(np.all(sample >= 4))
+    sample = utils.sample_integers_around_center(5, 0, 4, 6, 100, random_state)
+    self.assertTrue(np.all(sample == 5))
+    self.assertTrue(len(sample) == 100)
+    self.assertTrue(sample.dtype == np.int32)
+
+  def test_generate_batch_factor_code(self):
+    ground_truth_data = dummy_data.IdentityObservationsData()
+    representation_function = lambda x: np.array(x, dtype=np.float64)
+    num_points = 100
+    random_state = np.random.RandomState(3)
+    batch_size = 192
+    represents, factors = utils.generate_batch_factor_code(ground_truth_data, 
+        representation_function, num_points, random_state, batch_size)
+    # representation is identity
+    for batch in [represents, factors]:
+      np.testing.assert_equal(batch.shape, [10, num_points])
+      for inx in range(10):
+        self.assertEqual(np.min(batch[inx,:]), 0)
+        self.assertEqual(np.max(batch[inx,:]), 10 - 1)
+
+  def test_generate_local_batch_factor_code(self):
+    ground_truth_data = dummy_data.IdentityObservationsData()
+    representation_function = lambda x: np.array(x, dtype=np.float64)
+    num_points = 100
+    random_state = np.random.RandomState(3)
+    batch_size = 192
+    local_repr, local_facts = utils.generate_local_batch_factor_code(ground_truth_data, 
+        representation_function, num_points, random_state, batch_size,
+        locality_proportion=1.0, continuity_cutoff=0.0)
+    for local_batch in [local_repr, local_facts]:
+      np.testing.assert_equal(local_batch.shape, [10,num_points])
+      for inx in range(10):
+        self.assertEqual(np.min(local_batch[inx,:]), 0)
+        self.assertEqual(np.max(local_batch[inx,:]), 10 - 1)
+    local_repr, local_facts = utils.generate_local_batch_factor_code(ground_truth_data, 
+        representation_function, num_points, random_state, batch_size,
+        locality_proportion=0.1, continuity_cutoff=0.0)
+    # representation is identity
+    for local_batch in [local_repr, local_facts]:
+      np.testing.assert_equal(local_batch.shape, [10, num_points])
+      for inx in range(10):
+        assert_correct_radius(self, local_batch[inx,:], 1, 0, 10-1)
+    
+
+
+# used in the sampling test
+# samples should span the full 2 * radius unless they hit an upper/lower bound
+def assert_correct_radius(tester, array, radius, lowbound, upbound):
+  minval = np.min(array)
+  maxval = np.max(array)
+  if minval == lowbound or maxval == upbound:
+    tester.assertTrue(maxval - minval <= 2 * radius)
+  else:
+    tester.assertEqual(maxval - minval, 2 * radius)
+
 
 if __name__ == '__main__':
   absltest.main()

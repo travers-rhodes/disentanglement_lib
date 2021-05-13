@@ -175,3 +175,96 @@ def logistic_regression_cv():
 def gradient_boosting_classifier():
   """Default gradient boosting classifier."""
   return ensemble.GradientBoostingClassifier()
+
+
+# TSR: This method generates a local sample from the factor space.
+# It randomly selects a "center" latent factor value for each latent dimension.
+# It then randomly selects a batch of latent factor values that are "near" to 
+# that latent value.
+# Inputs:
+#  -num (int): the number of samples to draw
+#  -locality_proportion (float): The normalized radius of random sampling for
+#     continuous variables. For example, if a latent factor has 100 values and
+#     the locality_proportion is 0.1 then we will sample latent values for that
+#     factor within 10 of the center value for that factor.
+#  -factors_num_values (int[]): The number of possible integer values for each 
+#     factor.
+#     IMPORTANT ASSUMPTION:
+#        we assume that The latent factors are all integers in a range 0 to
+#        factors_num_values[index]-1 (inclusive)
+#  -continuity_cutoff (int): factors with fewer than this many discrete values
+#     are considered "discontinuous" and will have the same value sampled within 
+#     each batch sampled
+#  -random_state (obj): the numpy random_state object for deterministic sampling
+def local_sample_factors(num, locality_proportion, factors_num_values,
+    continuity_cutoff, random_state):
+  """Sample a batch of the latent factors locally around some central sampled
+  point."""
+  factors = np.zeros(
+      shape=(num, len(factors_num_values)), dtype=np.int64)
+  for i, num_values in enumerate(factors_num_values):
+    center = random_state.randint(num_values)
+    # if this factor has too few factors to be considered "continuous"
+    # then just return the center value for this factor
+    if num_values >= continuity_cutoff:
+      radius = np.floor(num_values * locality_proportion)
+    else:
+      radius = 0
+    factors[:, i] = sample_integers_around_center(center, radius, minv=0,
+        maxv = num_values-1, num=num, random_state=random_state)
+  return factors
+
+
+# sample num different integers within radius (inclusive) of center.
+# clipped below to minv (usually 0) and above to maxv (usually num_values - 1)
+# using the random_state object passed in 
+def sample_integers_around_center(center, radius, minv, maxv, num, random_state):
+  lower_bound = max(minv, center-radius)
+  upper_bound = min(maxv, center+radius)
+  return random_state.randint(lower_bound, upper_bound + 1, size=num,
+      dtype=np.int32)
+
+def generate_local_batch_factor_code(ground_truth_data, representation_function,
+                               num_points, random_state, batch_size,
+                               locality_proportion=1.0, continuity_cutoff=0.0):
+  """Sample a single training sample based on a mini-batch of ground-truth data.
+     but ensure that the training sample is "close" in generative factor space.
+
+  Args:
+    ground_truth_data: GroundTruthData to be sampled from.
+    representation_function: Function that takes observation as input and
+      outputs a representation.
+    num_points: Number of points to sample.
+    random_state: Numpy random state used for randomness.
+    batch_size: Batchsize to sample points.
+    locality_proportion: How local is local (as fraction of num_values for
+      factor). The default of 1.0 means that all values are considered "local"
+    continuity_cutoff: How many values does a factor need in order to be
+      considered "continuous" and therefore locally samplable. The default of
+      0.0 means that all factors are considered continuous (and therefore no
+      factor is held constant during local sampling)
+
+  Returns:
+    representations: Codes (num_codes, num_points)-np array.
+    factors: Factors generating the codes (num_factors, num_points)-np array.
+  """
+  representations = None
+  factors = None
+  i = 0
+  while i < num_points:
+    num_points_iter = min(num_points - i, batch_size)
+    factors_num_values = ground_truth_data.factors_num_values
+    current_factors = local_sample_factors(num_points_iter, locality_proportion, 
+        factors_num_values, continuity_cutoff, random_state)
+    current_observations = ground_truth_data.sample_observations_from_factors(
+        current_factors, random_state)
+    if i == 0:
+      factors = current_factors
+      representations = representation_function(current_observations)
+    else:
+      factors = np.vstack((factors, current_factors))
+      representations = np.vstack((representations,
+                                   representation_function(
+                                       current_observations)))
+    i += num_points_iter
+  return np.transpose(representations), np.transpose(factors)
