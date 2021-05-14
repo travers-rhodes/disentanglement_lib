@@ -1,5 +1,6 @@
 # coding=utf-8
 # Copyright 2018 The DisentanglementLib Authors.  All rights reserved.
+# Copyright 2021 Travers Rhodes.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +13,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# This file was modified by Travers Rhodes in 2021
 
 """Utility functions that are useful for the different metrics."""
 from __future__ import absolute_import
@@ -178,9 +181,8 @@ def gradient_boosting_classifier():
 
 
 # TSR: This method generates a local sample from the factor space.
-# It randomly selects a "center" latent factor value for each latent dimension.
 # It then randomly selects a batch of latent factor values that are "near" to 
-# that latent value.
+# the latent value given by factor_centroid
 # Inputs:
 #  -num (int): the number of samples to draw
 #  -locality_proportion (float): The normalized radius of random sampling for
@@ -192,18 +194,19 @@ def gradient_boosting_classifier():
 #     IMPORTANT ASSUMPTION:
 #        we assume that The latent factors are all integers in a range 0 to
 #        factors_num_values[index]-1 (inclusive)
+#  -factors_centroid: the factor set that we should sample near
 #  -continuity_cutoff (int): factors with fewer than this many discrete values
 #     are considered "discontinuous" and will have the same value sampled within 
 #     each batch sampled
 #  -random_state (obj): the numpy random_state object for deterministic sampling
-def local_sample_factors(num, locality_proportion, factors_num_values,
-    continuity_cutoff, random_state):
+def local_sample_factors(num, locality_proportion, factors_num_values, 
+    factor_centroid, continuity_cutoff, random_state):
   """Sample a batch of the latent factors locally around some central sampled
   point."""
   factors = np.zeros(
       shape=(num, len(factors_num_values)), dtype=np.int64)
   for i, num_values in enumerate(factors_num_values):
-    center = random_state.randint(num_values)
+    center = factor_centroid[i] 
     # if this factor has too few factors to be considered "continuous"
     # then just return the center value for this factor
     if num_values >= continuity_cutoff:
@@ -226,7 +229,7 @@ def sample_integers_around_center(center, radius, minv, maxv, num, random_state)
 
 def generate_local_batch_factor_code(ground_truth_data, representation_function,
                                num_points, random_state, batch_size,
-                               locality_proportion=1.0, continuity_cutoff=0.0):
+                               locality_proportion=1.0, continuity_cutoff=0):
   """Sample a single training sample based on a mini-batch of ground-truth data.
      but ensure that the training sample is "close" in generative factor space.
 
@@ -250,12 +253,18 @@ def generate_local_batch_factor_code(ground_truth_data, representation_function,
   """
   representations = None
   factors = None
+  factors_num_values = ground_truth_data.factors_num_values
+
+  # compute the centroid around which we sample this batch
+  factor_centroid = []
+  for i, num_values in enumerate(factors_num_values):
+    factor_centroid.append(random_state.randint(num_values))
+
   i = 0
   while i < num_points:
     num_points_iter = min(num_points - i, batch_size)
-    factors_num_values = ground_truth_data.factors_num_values
     current_factors = local_sample_factors(num_points_iter, locality_proportion, 
-        factors_num_values, continuity_cutoff, random_state)
+        factors_num_values, factor_centroid, continuity_cutoff, random_state)
     current_observations = ground_truth_data.sample_observations_from_factors(
         current_factors, random_state)
     if i == 0:

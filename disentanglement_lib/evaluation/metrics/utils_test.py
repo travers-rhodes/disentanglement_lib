@@ -1,5 +1,6 @@
 # coding=utf-8
 # Copyright 2018 The DisentanglementLib Authors.  All rights reserved.
+# Copyright 2021 Travers Rhodes.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +13,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# This file was modified by Travers Rhodes in 2021
 
 """Tests for utils.py."""
 from __future__ import absolute_import
@@ -58,8 +61,9 @@ class UtilsTest(absltest.TestCase):
     random_state = np.random.RandomState(3)
     # sample range of 10% of num_factors
     factor_num_values = [1, 9, 10, 11, 100, 101]
+    factor_centroid = np.array([0, 4, 9, 3, 10, 10])
     samps = utils.local_sample_factors(1000, 0.1, 
-        factor_num_values, 0, random_state)
+        factor_num_values, factor_centroid, 0, random_state)
     np.testing.assert_equal(samps.shape, (1000, 6))
     self.assertTrue(np.all(samps[:,0] == 0))
     # should all have the same value, since 0.1 * 9 < 1
@@ -76,7 +80,7 @@ class UtilsTest(absltest.TestCase):
     # sample range of 10% of num_factors
     factor_num_values = [1, 9, 10, 11, 100, 110]
     samps = utils.local_sample_factors(1000, 0.15, 
-        factor_num_values, 11, random_state)
+        factor_num_values, factor_centroid, 11, random_state)
     np.testing.assert_equal(samps.shape, (1000, 6))
     self.assertTrue(np.all(samps[:,0] == 0))
     # should all have the same value
@@ -123,12 +127,26 @@ class UtilsTest(absltest.TestCase):
         self.assertEqual(np.min(batch[inx,:]), 0)
         self.assertEqual(np.max(batch[inx,:]), 10 - 1)
 
+  # just for debugging
+  #def test_print_sample(self):
+  #  ground_truth_data = dummy_data.IdentityObservationsCustomSize([100] * 10)
+  #  representation_function = lambda x: np.array(x % 50, dtype=np.float64)
+  #  num_points = 10
+  #  random_state = np.random.RandomState(3)
+  #  batch_size = 192
+  #  local_repr, local_facts = utils.generate_local_batch_factor_code(ground_truth_data, 
+  #      representation_function, num_points, random_state, batch_size,
+  #      locality_proportion=1.0, continuity_cutoff=0.0)
+  #  print(local_repr)
+  #  print(local_facts)
+
   def test_generate_local_batch_factor_code(self):
     ground_truth_data = dummy_data.IdentityObservationsData()
     representation_function = lambda x: np.array(x, dtype=np.float64)
     num_points = 100
     random_state = np.random.RandomState(3)
-    batch_size = 192
+    # you gotta test batch size smaller than num_points, silly
+    batch_size = 13 
     local_repr, local_facts = utils.generate_local_batch_factor_code(ground_truth_data, 
         representation_function, num_points, random_state, batch_size,
         locality_proportion=1.0, continuity_cutoff=0.0)
