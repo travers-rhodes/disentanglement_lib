@@ -31,6 +31,7 @@ from disentanglement_lib.evaluation.metrics import factor_vae  # pylint: disable
 from disentanglement_lib.evaluation.metrics import fairness  # pylint: disable=unused-import
 from disentanglement_lib.evaluation.metrics import irs  # pylint: disable=unused-import
 from disentanglement_lib.evaluation.metrics import mig  # pylint: disable=unused-import
+from disentanglement_lib.evaluation.metrics import local_mig  # pylint: disable=unused-import
 from disentanglement_lib.evaluation.metrics import modularity_explicitness  # pylint: disable=unused-import
 from disentanglement_lib.evaluation.metrics import reduced_downstream_task  # pylint: disable=unused-import
 from disentanglement_lib.evaluation.metrics import sap_score  # pylint: disable=unused-import
