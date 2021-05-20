@@ -1,5 +1,6 @@
 # coding=utf-8
 # Copyright 2018 The DisentanglementLib Authors.  All rights reserved.
+# Copyright 2021 Travers Rhodes.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +13,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# This file was modified by Travers Rhodes
 
 """Mutual Information Gap from the beta-TC-VAE paper.
 
@@ -67,8 +70,14 @@ def _compute_mig(mus_train, ys_train):
   # m is [num_latents, num_factors]
   entropy = utils.discrete_entropy(ys_train)
   sorted_m = np.sort(m, axis=0)[::-1]
-  score_dict["discrete_mig"] = np.mean(
-      np.divide(sorted_m[0, :] - sorted_m[1, :], entropy[:]))
+  # for local sampling you won't sample along some dimensions,
+  # so you will get some 0 entropies for the ys entropy (storing one
+  # value per factor of ys), so we safe divide, replace with NaN
+  # and remove NaNs using NaNmean
+  score_dict["discrete_mig"] = np.nanmean(
+          np.divide(sorted_m[0, :] - sorted_m[1, :], entropy[:], 
+              out=np.zeros_like(entropy[:]).fill(np.nan),
+              where=entropy[:]!=0))
   return score_dict
 
 

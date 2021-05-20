@@ -199,19 +199,26 @@ def gradient_boosting_classifier():
 #     are considered "discontinuous" and will have the same value sampled within 
 #     each batch sampled
 #  -random_state (obj): the numpy random_state object for deterministic sampling
-def local_sample_factors(num, locality_proportion, factors_num_values, 
-    factor_centroid, continuity_cutoff, random_state):
+@gin.configurable("local_sample_factors", 
+        blacklist=["num", "factors_num_values", "factor_centroid", "random_state"])
+def local_sample_factors(num, factors_num_values, factor_centroid, random_state, 
+        locality_proportion=gin.REQUIRED, continuity_cutoff=gin.REQUIRED, 
+        blacklist_factors=gin.REQUIRED):
   """Sample a batch of the latent factors locally around some central sampled
   point."""
+  #print("Using locality_proportion of %f" % locality_proportion)
+  #print("Using continuity_cutoff of %d" % continuity_cutoff)
+  #print("Using blackout indices of %s" % blacklist_factors)
   factors = np.zeros(
       shape=(num, len(factors_num_values)), dtype=np.int64)
   for i, num_values in enumerate(factors_num_values):
     center = factor_centroid[i] 
     # if this factor has too few factors to be considered "continuous"
     # then just return the center value for this factor
-    if num_values >= continuity_cutoff:
+    if num_values >= continuity_cutoff and i not in blacklist_factors:
       radius = np.floor(num_values * locality_proportion)
     else:
+      #print("not sampling this i, num_values, center", i, num_values, center)
       radius = 0
     factors[:, i] = sample_integers_around_center(center, radius, minv=0,
         maxv = num_values-1, num=num, random_state=random_state)
@@ -263,8 +270,8 @@ def generate_local_batch_factor_code(ground_truth_data, representation_function,
   i = 0
   while i < num_points:
     num_points_iter = min(num_points - i, batch_size)
-    current_factors = local_sample_factors(num_points_iter, locality_proportion, 
-        factors_num_values, factor_centroid, continuity_cutoff, random_state)
+    current_factors = local_sample_factors(num_points_iter, 
+        factors_num_values, factor_centroid, random_state)
     current_observations = ground_truth_data.sample_observations_from_factors(
         current_factors, random_state)
     if i == 0:
