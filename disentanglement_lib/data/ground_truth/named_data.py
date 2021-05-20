@@ -1,5 +1,6 @@
 # coding=utf-8
 # Copyright 2018 The DisentanglementLib Authors.  All rights reserved.
+# Copyright 2021 Travers Rhodes.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +24,7 @@ from disentanglement_lib.data.ground_truth import dummy_data
 from disentanglement_lib.data.ground_truth import mpi3d
 from disentanglement_lib.data.ground_truth import norb
 from disentanglement_lib.data.ground_truth import shapes3d
+from disentanglement_lib.data.ground_truth import threeDots
 import gin.tf
 
 
@@ -37,7 +39,9 @@ def get_named_ground_truth_data(name):
     ValueError: if an invalid data set name is provided.
   """
 
-  if name == "dsprites_full":
+  if name == "threeDots":
+    return threeDots.ThreeDots()
+  elif name == "dsprites_full":
     return dsprites.DSprites([1, 2, 3, 4, 5])
   elif name == "dsprites_noshape":
     return dsprites.DSprites([2, 3, 4, 5])
