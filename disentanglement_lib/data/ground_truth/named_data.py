@@ -39,7 +39,10 @@ def get_named_ground_truth_data(name):
     ValueError: if an invalid data set name is provided.
   """
 
-  if name == "threeDots":
+  if name == "threeDotsCache": 
+    # a large random sample from ThreeDots
+    return threeDots.ThreeDotsTrainingCache()
+  elif name == "threeDots":
     return threeDots.ThreeDots()
   elif name == "dsprites_full":
     return dsprites.DSprites([1, 2, 3, 4, 5])

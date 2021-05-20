@@ -16,6 +16,51 @@
 from disentanglement_lib.data.ground_truth import util, ground_truth_data
 import numpy as np
 import cv2
+import os
+from pathlib import Path
+
+THREE_DOTS_CACHE_PATH = os.path.join(
+    os.environ.get("DISENTANGLEMENT_LIB_DATA", "."), "threeDots")
+THREE_DOTS_CACHE_ZIP = os.path.join(THREE_DOTS_CACHE_PATH,
+    "trainingCache.npz")
+
+class ThreeDotsTrainingCache(ground_truth_data.GroundTruthData):
+  """Three Dots Dataset Cache for Training
+  
+     This class generates a LARGE random batch of data
+     and reads back random samples when sample_observations
+     is called.
+
+     This class should only be used for training, since it doesn't actually
+     implement sample_observations_from_factors
+
+     However if you want to train quickly, use this class, since the
+     pre-computed images are faster than using ThreeDots class to calculate/draw
+     the images as needed.
+
+     Our fine-resolution state space has 64^6 datapoints, so is too large to
+     practically/nicely store in memory. Thus, we use a large random sample
+     instead.
+  """
+  def __init__(self, seed=0, latent_factor_granularity=64):
+    self.random_state = np.random.RandomState(seed)
+    self.threeDotsGenerator = ThreeDots(latent_factor_granularity)
+    # if the training cache doesn't exist, create one!
+    if not os.path.exists(THREE_DOTS_CACHE_ZIP):
+      print("No three dots cache zip found...creating one")
+      Path(THREE_DOTS_CACHE_PATH).mkdir(parents=True, exist_ok=True)
+      numTotalSamples = int(1000000) 
+      factors, imgs = self.threeDotsGenerator.sample(numTotalSamples,
+        self.random_state)
+      np.savez_compressed(THREE_DOTS_CACHE_ZIP, factors=factors, imgs=imgs)
+    data = np.load(THREE_DOTS_CACHE_ZIP)
+    self.fullDataset = data["imgs"]
+    print("Loaded dataset of threeDots data with shape", self.fullDataset.shape)
+
+  def sample_observations(self, num, random_state):
+    # we have to reshape or else num==1 condenses to int, not array
+    indexArray = self.random_state.choice((num,)).reshape((num,))
+    return self.fullDataset[indexArray]
 
 class ThreeDots(ground_truth_data.GroundTruthData):
   """Three Dots dataset.
