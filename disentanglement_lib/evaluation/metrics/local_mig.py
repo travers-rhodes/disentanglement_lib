@@ -78,4 +78,5 @@ def compute_local_mig(ground_truth_data,
   mig_results = np.array(mig_results)
   avg_score_dict = {}
   avg_score_dict["discrete_mig"] = np.mean(mig_results)
+  avg_score_dict["local_discrete_migs_samples"] = mig_results.tolist()
   return avg_score_dict
