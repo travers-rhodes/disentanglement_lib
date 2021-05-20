@@ -235,8 +235,7 @@ def sample_integers_around_center(center, radius, minv, maxv, num, random_state)
       dtype=np.int32)
 
 def generate_local_batch_factor_code(ground_truth_data, representation_function,
-                               num_points, random_state, batch_size,
-                               locality_proportion=1.0, continuity_cutoff=0):
+                               num_points, random_state, batch_size):
   """Sample a single training sample based on a mini-batch of ground-truth data.
      but ensure that the training sample is "close" in generative factor space.
 
@@ -247,12 +246,6 @@ def generate_local_batch_factor_code(ground_truth_data, representation_function,
     num_points: Number of points to sample.
     random_state: Numpy random state used for randomness.
     batch_size: Batchsize to sample points.
-    locality_proportion: How local is local (as fraction of num_values for
-      factor). The default of 1.0 means that all values are considered "local"
-    continuity_cutoff: How many values does a factor need in order to be
-      considered "continuous" and therefore locally samplable. The default of
-      0.0 means that all factors are considered continuous (and therefore no
-      factor is held constant during local sampling)
 
   Returns:
     representations: Codes (num_codes, num_points)-np array.
