@@ -49,17 +49,18 @@ class ThreeDotsTrainingCache(ground_truth_data.GroundTruthData):
     if not os.path.exists(THREE_DOTS_CACHE_ZIP):
       print("No three dots cache zip found...creating one")
       Path(THREE_DOTS_CACHE_PATH).mkdir(parents=True, exist_ok=True)
-      numTotalSamples = int(1000000) 
+      numTotalSamples = int(500000) # comparable size to dsprites
       factors, imgs = self.threeDotsGenerator.sample(numTotalSamples,
         self.random_state)
       np.savez_compressed(THREE_DOTS_CACHE_ZIP, factors=factors, imgs=imgs)
     data = np.load(THREE_DOTS_CACHE_ZIP)
     self.fullDataset = data["imgs"]
+    self.totalCacheSize = self.fullDataset.shape[0]
     print("Loaded dataset of threeDots data with shape", self.fullDataset.shape)
 
   def sample_observations(self, num, random_state):
     # we have to reshape or else num==1 condenses to int, not array
-    indexArray = self.random_state.choice((num,)).reshape((num,))
+    indexArray = self.random_state.choice(self.totalCacheSize, (num,))
     return self.fullDataset[indexArray]
 
 class ThreeDots(ground_truth_data.GroundTruthData):
