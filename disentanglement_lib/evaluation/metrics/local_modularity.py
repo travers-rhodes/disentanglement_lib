@@ -33,7 +33,7 @@ import gin.tf
 
 @gin.configurable(
     "local_modularity",
-    blacklist=["ground_truth_data", "representation_function", "random_state",
+    denylist=["ground_truth_data", "representation_function", "random_state",
                "artifact_dir"])
 def compute_local_modularity(ground_truth_data,
                                     representation_function,

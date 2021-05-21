@@ -136,14 +136,14 @@ def discrete_entropy(ys):
 
 
 @gin.configurable(
-    "discretizer", blacklist=["target"])
+    "discretizer", denylist=["target"])
 def make_discretizer(target, num_bins=gin.REQUIRED,
                      discretizer_fn=gin.REQUIRED):
   """Wrapper that creates discretizers."""
   return discretizer_fn(target, num_bins)
 
 
-@gin.configurable("histogram_discretizer", blacklist=["target"])
+@gin.configurable("histogram_discretizer", denylist=["target"])
 def _histogram_discretize(target, num_bins=gin.REQUIRED):
   """Discretization based on histograms."""
   discretized = np.zeros_like(target)
@@ -200,22 +200,22 @@ def gradient_boosting_classifier():
 #     each batch sampled
 #  -random_state (obj): the numpy random_state object for deterministic sampling
 @gin.configurable("local_sample_factors", 
-        blacklist=["num", "factors_num_values", "factor_centroid", "random_state"])
+        denylist=["num", "factors_num_values", "factor_centroid", "random_state"])
 def local_sample_factors(num, factors_num_values, factor_centroid, random_state, 
         locality_proportion=gin.REQUIRED, continuity_cutoff=gin.REQUIRED, 
-        blacklist_factors=gin.REQUIRED):
+        denylist_factors=gin.REQUIRED):
   """Sample a batch of the latent factors locally around some central sampled
   point."""
   #print("Using locality_proportion of %f" % locality_proportion)
   #print("Using continuity_cutoff of %d" % continuity_cutoff)
-  #print("Using blackout indices of %s" % blacklist_factors)
+  #print("Using blackout indices of %s" % denylist_factors)
   factors = np.zeros(
       shape=(num, len(factors_num_values)), dtype=np.int64)
   for i, num_values in enumerate(factors_num_values):
     center = factor_centroid[i] 
     # if this factor has too few factors to be considered "continuous"
     # then just return the center value for this factor
-    if num_values >= continuity_cutoff and i not in blacklist_factors:
+    if num_values >= continuity_cutoff and i not in denylist_factors:
       radius = np.floor(num_values * locality_proportion)
     else:
       #print("not sampling this i, num_values, center", i, num_values, center)

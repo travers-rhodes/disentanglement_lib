@@ -37,7 +37,7 @@ def initialize_gin():
   gin.bind_parameter("discretizer.discretizer_fn", _identity_discretizer)
   #gin.bind_parameter("discretizer.discretizer_fn", utils._histogram_discretize)
   gin.bind_parameter("discretizer.num_bins", 10)
-  gin.bind_parameter("local_sample_factors.blacklist_factors", []) 
+  gin.bind_parameter("local_sample_factors.denylist_factors", []) 
   gin.bind_parameter("local_sample_factors.locality_proportion", 1.0)
   gin.bind_parameter("local_mig.num_train", 10000)
   gin.bind_parameter("local_mig.num_local_clusters", 20)

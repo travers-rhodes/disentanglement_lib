@@ -31,7 +31,7 @@ import gin.tf
 
 @gin.configurable(
     "local_mig",
-    blacklist=["ground_truth_data", "representation_function", "random_state",
+    denylist=["ground_truth_data", "representation_function", "random_state",
                "artifact_dir"])
 def compute_local_mig(ground_truth_data,
                 representation_function,
