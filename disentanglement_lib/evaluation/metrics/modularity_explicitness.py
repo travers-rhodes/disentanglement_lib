@@ -1,5 +1,6 @@
 # coding=utf-8
 # Copyright 2018 The DisentanglementLib Authors.  All rights reserved.
+# Copyright 2021 Travers Rhodes.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +13,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# This file was modified by Travers Rhodes
 
 """Modularity and explicitness metrics from the F-statistic paper.
 
@@ -101,7 +104,12 @@ def explicitness_per_factor(mus_train, y_train, mus_test, y_test):
   """
   x_train = np.transpose(mus_train)
   x_test = np.transpose(mus_test)
-  clf = linear_model.LogisticRegression().fit(x_train, y_train)
+  # CHANGED: Explicitly use the default params from numpy 0.20 (solver,
+  # multi_class) to avoid warning messages
+  clf = linear_model.LogisticRegression(
+                       solver='liblinear',
+                       multi_class='ovr'
+          ).fit(x_train, y_train)
   y_pred_train = clf.predict_proba(x_train)
   y_pred_test = clf.predict_proba(x_test)
   mlb = preprocessing.MultiLabelBinarizer()
