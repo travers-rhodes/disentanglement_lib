@@ -57,6 +57,10 @@ class ThreeDotsTrainingCache(ground_truth_data.GroundTruthData):
     self.fullDataset = data["imgs"]
     self.totalCacheSize = self.fullDataset.shape[0]
     print("Loaded dataset of threeDots data with shape", self.fullDataset.shape)
+  
+  @property
+  def observation_shape(self):
+    return [64, 64, 1]
 
   def sample_observations(self, num, random_state):
     # we have to reshape or else num==1 condenses to int, not array
