@@ -22,6 +22,7 @@ from disentanglement_lib.data.ground_truth import cars3d
 from disentanglement_lib.data.ground_truth import dsprites
 from disentanglement_lib.data.ground_truth import dummy_data
 from disentanglement_lib.data.ground_truth import mpi3d
+from disentanglement_lib.data.ground_truth import mpi3d_multi
 from disentanglement_lib.data.ground_truth import norb
 from disentanglement_lib.data.ground_truth import shapes3d
 from disentanglement_lib.data.ground_truth import threeDots
@@ -64,6 +65,8 @@ def get_named_ground_truth_data(name):
     return mpi3d.MPI3D(mode="mpi3d_realistic")
   elif name == "mpi3d_real":
     return mpi3d.MPI3D(mode="mpi3d_real")
+  elif name == "mpi3d_multi_real":
+    return mpi3d_multi.MPI3DMulti(mode="mpi3d_real")
   elif name == "shapes3d":
     return shapes3d.Shapes3D()
   elif name == "dummy_data":
