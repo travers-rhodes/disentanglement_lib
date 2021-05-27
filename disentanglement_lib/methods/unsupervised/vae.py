@@ -30,7 +30,7 @@ from six.moves import range
 from six.moves import zip
 import tensorflow.compat.v1 as tf
 import gin.tf
-from tensorflow.contrib import tpu as contrib_tpu
+from tensorflow.compat.v1.estimator import tpu as contrib_tpu
 
 
 class BaseVAE(gaussian_encoder_model.GaussianEncoderModel):

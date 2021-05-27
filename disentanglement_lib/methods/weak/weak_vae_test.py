@@ -44,11 +44,11 @@ class WeakVaeTest(parameterized.TestCase, tf.test.TestCase):
   def test_aggregate_argmax(self, z_mean, z_logvar, new_mean, new_log_var,
                             kl_per_point, target):
 
-    mean_tf = tf.convert_to_tensor(z_mean, dtype=np.float32)
-    logvar_tf = tf.convert_to_tensor(z_logvar, dtype=np.float32)
-    new_mean_tf = tf.convert_to_tensor(new_mean, dtype=np.float32)
-    new_log_var_tf = tf.convert_to_tensor(new_log_var, dtype=np.float32)
-    kl_per_point_tf = tf.convert_to_tensor(kl_per_point, dtype=np.float32)
+    mean_tf = tf.convert_to_tensor(value=z_mean, dtype=np.float32)
+    logvar_tf = tf.convert_to_tensor(value=z_logvar, dtype=np.float32)
+    new_mean_tf = tf.convert_to_tensor(value=new_mean, dtype=np.float32)
+    new_log_var_tf = tf.convert_to_tensor(value=new_log_var, dtype=np.float32)
+    kl_per_point_tf = tf.convert_to_tensor(value=kl_per_point, dtype=np.float32)
     with self.session() as sess:
       test_value = sess.run(weak_vae.aggregate_argmax(
           mean_tf, logvar_tf, new_mean_tf, new_log_var_tf, None,
