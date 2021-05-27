@@ -88,7 +88,7 @@ class MPI3DMulti(ground_truth_data.GroundTruthData):
             "Dataset '{}' not found. Make sure the dataset is publicly available and downloaded correctly."
             .format(mode))
       else:
-        print(mpi3d_path)
+        #print(mpi3d_path)
         with tf.io.gfile.GFile(mpi3d_path, "rb") as f:
           data = np.load(f)
       self.factor_sizes = [6, 6, 2, 3, 3, 40, 40]
@@ -129,7 +129,7 @@ class MPI3DMulti(ground_truth_data.GroundTruthData):
     # and then combining them into one larger image
     inner_imgs = []
     for innerindx in range(4):
-      print(innerindx,self.num_factors, factors.shape)
+      #print(innerindx,self.num_factors, factors.shape)
       all_factors = self.state_space.sample_all_factors(factors[:,
                                 (innerindx*self.num_factors):
                                    ((innerindx+1)*self.num_factors)]
@@ -140,7 +140,7 @@ class MPI3DMulti(ground_truth_data.GroundTruthData):
       inner_imgs.append(self.images[indices][:,0:64:2,0:64:2,:] / 255.)
     # combine all 4 sampled images into one image
     # index 0 of inner_imgs is image sample number
-    print(inner_imgs[0].shape)
+    #print(inner_imgs[0].shape)
     return np.concatenate((
                  np.concatenate((inner_imgs[0],inner_imgs[1]),axis=1),
                  np.concatenate((inner_imgs[2],inner_imgs[3]),axis=1)), axis=2)
