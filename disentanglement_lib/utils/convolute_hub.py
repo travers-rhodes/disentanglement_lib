@@ -1,5 +1,6 @@
 # coding=utf-8
 # Copyright 2018 The DisentanglementLib Authors.  All rights reserved.
+# Copyright 2021 Travers Rhodes. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,13 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#This file was modified by Travers Rhodes
+
 """Allows to convolute TFHub modules."""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import tensorflow.compat.v1 as tf
 import tensorflow_hub as hub
-from tensorflow.contrib import framework as contrib_framework
+# There ain't no such animal in tf v2
+#from tensorflow.contrib import framework as contrib_framework
 
 
 def convolute_and_save(module_path, signature, export_path, transform_fn,
@@ -67,8 +71,11 @@ def convolute_and_save(module_path, signature, export_path, transform_fn,
         if k.startswith(prefix)
     }
     if transform_variables:
+      print("Apparently we had transform variables and needed tf v1")
       init_fn = contrib_framework.assign_from_checkpoint_fn(
           transform_checkpoint_path, transform_variables)
+    else:
+      print("We did not have transform variables and are good to go")
 
     with tf.Session() as sess:
       # Initialize all variables, this also loads the TFHub parameters.
