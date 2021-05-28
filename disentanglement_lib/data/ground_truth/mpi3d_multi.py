@@ -134,6 +134,12 @@ class MPI3DMulti(ground_truth_data.GroundTruthData):
                                 (innerindx*self.num_factors):
                                    ((innerindx+1)*self.num_factors)]
                               , random_state)
+      # simple hack to only ever sample large blue squares
+      all_factors[:,0] = 3
+      all_factors[:,1] = 1
+      all_factors[:,2] = 1 
+      all_factors[:,3] = 0 
+      all_factors[:,4] = 2 
       indices = np.array(np.dot(all_factors, self.factor_bases), dtype=np.int64)
       # pull out this indices image and take every other pixel (superfast
       # resolution reduction
